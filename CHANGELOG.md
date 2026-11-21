@@ -38,6 +38,13 @@ This file records the notable changes in each dsh-im release. Its format follows
 - `/sessionlist --all` 跨工作区汇总列出会话，每个工作区默认显示 10 个并可用 `--limit N` 调整；单个工作区读取失败时跳过该分组并提示未包含的工作区数量，无效会话记录只跳过该行，均不影响其余结果。`/sessionlist` 用「（当前绑定）」标出本对话已绑定的会话，生产作用域也能正确读取该标记。`/session <关键词>` 按标题不区分大小写模糊匹配：仅在当前对话有效工作区内唯一命中时直接绑定；唯一命中位于其他工作区、命中多个、或部分工作区读取失败时只列出候选并要求完整 Session ID，避免误切换 bot 工作区并清除其他聊天的旧绑定；零命中保留原有按 Session ID 绑定的行为。标题关键词限制为单个连续词，未知旗标返回用法；对话专属工作区目录已不存在时回退到 bot 默认工作区。全部新增文案已同步英文与俄文词典。
   `/sessionlist --all` summarizes sessions across all workspaces, 10 per workspace unless `--limit N` says otherwise. A workspace whose list cannot be read is skipped and the number of omitted workspaces is reported; invalid session rows are skipped individually without hiding the rest. `/sessionlist` marks the session this chat is already bound to, and the production scope now exposes that binding correctly. `/session <keyword>` matches session titles case-insensitively and binds directly only when a single match is in the conversation's effective workspace. A unique match in another workspace, several matches, or a partial search list candidates and require the full Session ID, so an accidental keyword cannot move the bot workspace and clear other chats' bindings. When nothing matches, the previous Session-ID behaviour is preserved. Keywords are limited to a single token, unknown flags return usage, and a missing conversation workspace directory falls back to the bot default. Every new string ships with English and Russian translations.
 
+## [5.10.1] - 2026-11-21
+
+### Fixed / 修复
+
+- 兼容 Cordis 4.1（DSH 0.2.2 起）：插件根作用域改从 `ctx[Symbol.for("cordis.root")]` 读取，不再读取已被移除的 `ctx.root`。此前在 4.1 宿主上，共享 Harness 调用、投递上下文与会话同步会在启动阶段抛 `cannot get property "root" without inject`，表现为渠道启动失败与会话读取错误。
+  Cordis 4.1 compatibility (DSH 0.2.2 and later): the plugin root scope is now read from `ctx[Symbol.for("cordis.root")]` instead of the removed `ctx.root`. On a 4.1 host the previous code threw `cannot get property "root" without inject` during startup, which surfaced as channel startup failures and session read errors.
+
 ## [5.10.0] - 2026-11-04
 
 ### Added / 新增

@@ -14,6 +14,8 @@ import {
 } from '../plugin-src/host/session-sync-coordinator.mjs';
 import { registerSessionSyncMirror } from '../src/channels/shared/session-sync-registry.mjs';
 
+const cordisRoot = Symbol.for('cordis.root');
+
 const WEB_SOURCE = Object.freeze({ kind: 'user', rpcId: 'web-rpc' });
 const CONTEXT_SOURCE = Object.freeze({ kind: 'runtime-context' });
 const IM_SCOPE = 'http://127.0.0.1:3983';
@@ -78,7 +80,7 @@ function deliveryService(sends, { failOn = () => false, result = () => ({ sent: 
 function hostContext() {
   const listeners = [];
   return {
-    root: {},
+    [cordisRoot]: {},
     on(name, callback, options) {
       assert.equal(name, 'session/event');
       assert.deepEqual(options, { global: true });

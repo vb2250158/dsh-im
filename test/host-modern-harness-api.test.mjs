@@ -7,6 +7,8 @@ import { HarnessApprovalQueue } from '../src/channels/shared/harness-approval.mj
 import { HarnessClient, HarnessRpcError } from '../src/channels/shared/harness-client.mjs';
 import { classifyMessageFailure } from '../src/channels/shared/message-failure.mjs';
 
+const cordisRoot = Symbol.for('cordis.root');
+
 function asyncValues(...values) {
   return {
     async *[Symbol.asyncIterator]() {
@@ -47,7 +49,7 @@ function fakeContext(gateway) {
   const listeners = new Map();
   const root = {};
   const ctx = {
-    root,
+    [cordisRoot]: root,
     typertGateway: gateway,
     on(event, listener) {
       const entries = listeners.get(event) ?? [];
@@ -387,7 +389,7 @@ test('modern adapter maps the narrow legacy API without changing HarnessClient',
   const first = harnessConnection(ctx);
   const second = harnessConnection(ctx);
   assert.equal(first.apiProxy, second.apiProxy);
-  assert.equal(first.interactionScope, ctx.root);
+  assert.equal(first.interactionScope, ctx[cordisRoot]);
 
   const workspace = await first.apiProxy.workspace.list({ rpcId: 'workspace-list', payload: {} });
   assert.equal(workspace.result.value.items[0].path, '/workspace');
@@ -541,7 +543,7 @@ test('modern adapter preserves Typert business failures as Harness RPC errors', 
   const { ctx } = fakeContext(gateway);
   const client = new HarnessClient({
     apiProxy: modernHarnessApi(ctx),
-    interactionScope: ctx.root,
+    interactionScope: ctx[cordisRoot],
     workspace: '/workspace',
   });
   await assert.rejects(

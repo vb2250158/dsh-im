@@ -5,6 +5,8 @@ import { harnessConnection } from '../plugin-src/host/harness-connection.mjs';
 import { inject as hostInject } from '../plugin-src/host/index.mjs';
 import { toPosixPath } from './support/filesystem.mjs';
 
+const cordisRoot = Symbol.for('cordis.root');
+
 const IM_CHANNELS = [
   'weixin', 'feishu', 'dingtalk', 'wecom', 'qq',
   'slack', 'telegram', 'discord', 'whatsapp', 'matrix', 'wecom-app', 'imessage', 'email',
@@ -16,13 +18,13 @@ function modernContext(extra = {}) {
 
 test('Host connections use the modern gateway and share the current Cordis root', () => {
   const root = {};
-  const ctx = modernContext({ root, get apiProxy() { throw new Error('legacy service must not be read'); } });
+  const ctx = modernContext({ [cordisRoot]: root, get apiProxy() { throw new Error('legacy service must not be read'); } });
   const first = harnessConnection(ctx);
-  const second = harnessConnection(modernContext({ root }));
+  const second = harnessConnection(modernContext({ [cordisRoot]: root }));
   assert.equal(first.apiProxy, second.apiProxy);
   assert.equal(first.interactionScope, root);
   assert.equal(first.competitiveApprovals, false);
-  assert.notEqual(first.interactionScope, harnessConnection(modernContext({ root: {} })).interactionScope);
+  assert.notEqual(first.interactionScope, harnessConnection(modernContext({ [cordisRoot]: {} })).interactionScope);
   const fixtureContext = modernContext();
   assert.equal(harnessConnection(fixtureContext).interactionScope, fixtureContext);
   assert.throws(() => harnessConnection({ apiProxy: {} }), /requires the modern Host Typert gateway/);
@@ -123,7 +125,7 @@ async function assembledHarness(channel, ctx, config = {}, inspect) {
 for (const channel of [...IM_CHANNELS, 'office']) {
   test(`${channel} production uses the modern Host gateway with no webServer or listening port`, async () => {
     const root = {};
-    const ctx = modernContext({ credentials: {}, root });
+    const ctx = modernContext({ credentials: {}, [cordisRoot]: root });
     const options = await assembledHarness(channel, ctx);
     assert.equal(options.apiProxy, harnessConnection(ctx).apiProxy);
     assert.equal(options.competitiveApprovals, !['imessage', 'email', 'office'].includes(channel));

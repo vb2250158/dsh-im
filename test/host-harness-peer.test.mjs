@@ -6,6 +6,8 @@ import { modernHarnessApi } from '../plugin-src/host/modern-harness-api.mjs';
 import { createHarnessCommandExecutor } from '../plugin-src/host/harness-command-executor.mjs';
 import { runClearCommand } from '../src/channels/shared/clear-command.mjs';
 
+const cordisRoot = Symbol.for('cordis.root');
+
 const clients = [
   ['weixin', 'HarnessClient'], ['qq', 'QqHarnessClient'], ['feishu', 'HarnessClient'],
   ['dingtalk', 'HarnessClient'], ['wecom', 'WecomHarnessClient'], ['wecom-app', 'WecomAppHarnessClient'],
@@ -29,7 +31,7 @@ function fixture() {
     calls.push(request);
   }
   const ctx = {
-    root: {},
+    [cordisRoot]: {},
     connection: { createPeer(options) { created.push(options); return peer; } },
     typertGateway: {
       async invoke(request) {
@@ -106,7 +108,7 @@ test('one peer is shared by a Host adapter, released on unload, and replaced on 
   finish.resolve();
   await pending;
   const reloaded = fixture();
-  reloaded.ctx.root = f.ctx.root;
+  reloaded.ctx[cordisRoot] = f.ctx[cordisRoot];
   assert.notEqual(modernHarnessApi(reloaded.ctx), api);
   assert.equal(reloaded.created.length, 1);
   assert.notEqual(reloaded.peer, f.peer);
@@ -181,7 +183,7 @@ test('a command-only peer is released on unload and recreated on reload', async 
   await f.dispose();
   assert.equal(f.disposals, 1);
   const next = fixture();
-  next.ctx.root = f.ctx.root;
+  next.ctx[cordisRoot] = f.ctx[cordisRoot];
   await createHarnessCommandExecutor(next.ctx)('session', '/clear', { signal: new AbortController().signal });
   assert.equal(next.created.length, 1);
   await next.dispose();
